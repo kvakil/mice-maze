@@ -54,5 +54,11 @@ if __name__ == '__main__':
   stats.register("min", np.min)
   stats.register("max", np.max)
 
+  hall = tools.HallOfFame(5)
+
   algorithms.eaMuPlusLambda(toolbox.population(n=100), toolbox, mu=40, lambda_=60,
-                            cxpb=0.20, mutpb=0.60, stats=stats, ngen=100)
+                            cxpb=0.20, mutpb=0.30, stats=stats, halloffame=hall, ngen=50)
+
+  import pprint
+  for individual in hall:
+    pprint.pprint(Mouse(MAZE, individual).probs)
