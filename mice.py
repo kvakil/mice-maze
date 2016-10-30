@@ -117,5 +117,5 @@ class Mouse:
       self.turns = 0
       self.position = self.maze.start
 
-    return total/N
+    return total / N
 
