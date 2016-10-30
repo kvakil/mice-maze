@@ -27,6 +27,9 @@ class Position:
   def __ne__(self, other):
     return self.x != other.x or self.y != other.y
 
+  def __hash__(self):
+    return hash((self.x, self.y))
+
 class Compass(Enum):
   east = Position(0, 1)
   north = Position(-1, 0)
@@ -49,7 +52,7 @@ class Maze:
     return self.maze[position.x][position.y]
 
 class Mouse:
-  lifespan = 200
+  lifespan = 250
 
   def __init__(self, maze, probs):
     self.probs = [[probs[ 0], probs[ 1], probs[ 2], probs[ 3]], # ENWS
