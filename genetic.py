@@ -1,64 +1,96 @@
 if __name__ == '__main__':
   from mice import *
   from deap import base, creator, tools, algorithms
-  import numpy as np
+  import numpy
   from numpy.random import dirichlet
   import random
-
-  maze = [[Tile.block, Tile.block, Tile.block, Tile.block, Tile.block, Tile.block],
-          [Tile.block, Tile.start, Tile.block, Tile.end  , Tile.open,  Tile.block],
-          [Tile.block, Tile.open , Tile.open , Tile.block, Tile.open , Tile.block],
-          [Tile.block, Tile.open , Tile.block, Tile.open , Tile.open , Tile.block],
-          [Tile.block, Tile.open , Tile.open , Tile.open , Tile.open , Tile.block],
-          [Tile.block, Tile.block, Tile.block, Tile.block, Tile.block, Tile.block]]
-
-  MAZE = Maze(maze)
+  import argparse
 
   block_sizes = [4, 3, 3, 2, 3, 2, 2, 3, 2, 2, 2]
+
   def random_probs():
     probs = []
     for size in block_sizes:
-      probs.extend(dirichlet(np.ones(size), size=size)[0])
+      probs.extend(dirichlet(numpy.ones(size), size=1)[0])
     return probs
 
-  def evaluate(individual):
+  def evaluate(individual, sims):
     m = Mouse(MAZE, individual)
-    return m.simulate(100),
+    return m.simulate(sims),
 
   def mutate(individual):
     cur = 0
     for size in block_sizes:
-      for j in range(size):
-        individual[cur + j] += 0.1 * random.random()
-      total = sum(individual[cur:cur+size])
-      individual[cur:cur+size] = [e / total for e in individual[cur:cur+size]]
+      individual[cur:cur+size] = dirichlet(individual[cur:cur+size], size=1)[0]
       cur += size
     return (individual,)
 
+  def mate(ind1, ind2, spread):
+    weight = random.uniform(0.5 - spread, 0.5 + spread)
+    for i in range(len(ind1)):
+      ind1[i], ind2[i] = ind1[i] * weight + (1 - weight) * ind2[i], \
+                         ind2[i] * weight + (1 - weight) * ind1[i]
+    return ind1, ind2
+
+  parser = argparse.ArgumentParser()
+  parser.add_argument('maze', type=str,
+                      help='file containing maze')
+  parser.add_argument('--lifespan', default=250, type=int,
+                      help='lifespan of each mouse (increase for longer mazes)')
+  parser.add_argument('--spread', default=0.05, type=float,
+                      help='variance for the mate')
+  parser.add_argument('--sims', default=100, type=int,
+                      help='number of times to simulate each mouse')
+  parser.add_argument('--N', default=100, type=int,
+                      help='number of mice in a generation')
+  parser.add_argument('--mu', default=40, type=int,
+                      help='mu parameter in mu+lambda EA')
+  parser.add_argument('--lambda', default=60, type=int, dest='lambda_',
+                      help='lambda parameter in mu+lambda EA')
+  parser.add_argument('--cxpb', default=0.60, type=float,
+                      help='crossover probability in EA')
+  parser.add_argument('--mutpb', default=0.10, type=float,
+                      help='mutation probability in EA')
+  parser.add_argument('--ngen', default=50, type=int,
+                      help='number of generations to run')
+  parser.add_argument('--fame', default=5, type=int,
+                      help='print the top FAME individuals')
+  args = parser.parse_args()
+
+  Mouse.lifespan = args.lifespan
+
+  char_to_tile = {' ': Tile.open,
+                  '#': Tile.block,
+                  'S': Tile.start,
+                  'E': Tile.end }
+  with open(args.maze, 'r') as f:
+    maze_array = [[char_to_tile[i] for i in line]
+                                   for line in f.read().splitlines()]
+  MAZE = Maze(maze_array)
+
   creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
   creator.create("Individual", list, fitness=creator.FitnessMin)
-
-  GENOME = 28
 
   toolbox = base.Toolbox()
   toolbox.register("individual", tools.initIterate, creator.Individual, random_probs)
   toolbox.register("population", tools.initRepeat, list, toolbox.individual)
   toolbox.register("mutate", mutate)
-  toolbox.register("mate", tools.cxUniform, indpb=0.10)
+  toolbox.register("mate", mate, spread=args.spread)
   toolbox.register("select", tools.selBest)
-  toolbox.register("evaluate", evaluate)
+  toolbox.register("evaluate", evaluate, sims=args.sims)
 
   stats = tools.Statistics(key=lambda ind: ind.fitness.values)
-  stats.register("avg", np.mean)
-  stats.register("std", np.std)
-  stats.register("min", np.min)
-  stats.register("max", np.max)
+  stats.register("avg", numpy.mean)
+  stats.register("stddev", numpy.std)
+  stats.register("min", numpy.min)
+  stats.register("max", numpy.max)
 
-  hall = tools.HallOfFame(5)
+  hall = tools.HallOfFame(args.fame) if args.fame else None
 
-  algorithms.eaMuPlusLambda(toolbox.population(n=100), toolbox, mu=40, lambda_=60,
-                            cxpb=0.20, mutpb=0.30, stats=stats, halloffame=hall, ngen=50)
+  algorithms.eaMuPlusLambda(toolbox.population(n=args.N), toolbox, mu=args.mu,
+                            lambda_=args.lambda_, cxpb=args.cxpb, mutpb=args.mutpb,
+                            stats=stats, halloffame=hall, ngen=args.ngen)
 
-  import pprint
-  for individual in hall:
-    pprint.pprint(Mouse(MAZE, individual).probs)
+  if hall:
+    for individual in hall:
+      print(Mouse(MAZE, individual).probs)
