@@ -24,7 +24,7 @@ if __name__ == '__main__':
     return mutate(numpy.ones(GENOME_SIZE))[0]
 
   def mate(ind1, ind2, spread):
-    weight = random.uniform(0.5 - spread/2, 0.5 + spread/2)
+    weight = 0.5 + random.uniform(-spread, spread) / 2
     for i in range(GENOME_SIZE):
       ind1[i], ind2[i] = ind1[i] * weight + (1 - weight) * ind2[i], \
                          ind2[i] * weight + (1 - weight) * ind1[i]
