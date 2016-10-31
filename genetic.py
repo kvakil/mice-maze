@@ -32,11 +32,13 @@ if __name__ == '__main__':
 
 
   def nonnegative(val):
-    if int(val) < 0:
+    val = int(val)
+    if val < 0:
       raise argparse.ArgumentTypeError("%s must be nonnegative" % val)
-    return int(val)
+    return val
 
   def probability(val):
+    val = float(val)
     if not (0 <= val <= 1):
       raise argparse.ArgumentTypeError("%s must be between 0 and 1" % val)
     return val
