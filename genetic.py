@@ -104,4 +104,4 @@ if __name__ == '__main__':
 
   if hall:
     for individual in hall:
-      print(Mouse(MAZE, individual).probs)
+      print(Mouse(MAZE, individual).simulate(args.sims))

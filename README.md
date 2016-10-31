@@ -25,7 +25,5 @@ The mouse's chromosome is a list of probabilities, which determines how likely i
 
 ## TODO
 
-1. make it easier to load a maze in for solving.
-2. tune parameters.
-3. code cleanup and documentation.
-4. full writeup.
+1. code cleanup and documentation.
+2. full writeup.

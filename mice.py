@@ -89,8 +89,8 @@ class Maze:
     I = np.identity(n)
     try:
       ev = np.linalg.solve(I - Q, np.ones((n, 1))).item(0, 0)
-      if ev < 0:
-        return np.inf
+      # if ev < 0:
+      #   return np.inf
       return ev
     except np.linalg.linalg.LinAlgError:
       return np.inf
