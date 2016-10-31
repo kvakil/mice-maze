@@ -1,6 +1,8 @@
 from enum import Enum, IntEnum
 from random import uniform
 from collections import defaultdict
+import numpy as np
+import numpy.linalg
 
 class Tile(Enum):
   open = 0
@@ -45,11 +47,10 @@ class Maze:
       for j in range(self.width):
         if maze[i][j] == Tile.start:
           self.start = Position(i, j)
-          maze[i][j] = Tile.open
         elif maze[i][j] == Tile.end:
           self.end = Position(i, j)
-          maze[i][j] = Tile.open
     self.maze = maze
+    self.create_markov()
 
   def look(self, position):
     return self.maze[position.x][position.y]
@@ -67,7 +68,7 @@ class Maze:
     for i in range(1, self.height - 1):
       for j in range(1, self.width - 1):
         pos = Position(i, j)
-        if self.look(pos) == Tile.open and pos != self.end:
+        if not (pos == self.start or pos == self.end) and self.look(pos) == Tile.open:
           current_id += 1
           open_id[pos] = current_id
 
@@ -81,6 +82,15 @@ class Maze:
           matrix[pid][newpid] = 'probs[%d][%d]' % (surroundings, i)
 
     self.markov = eval('lambda probs: ' + repr(matrix).replace("'", ''))
+
+  def how_long(self, probs):
+    Q = np.matrix(self.markov(probs))
+    n = Q.shape[0]
+    I = np.identity(n)
+    try:
+      return (np.linalg.solve(I - Q, np.ones((n, 1)))).item(0, 0)
+    except np.linalg.linalg.LinAlgError:
+      return np.inf
 
 class Mouse:
   lifespan = 250

@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
   def evaluate(individual, sims):
     m = Mouse(MAZE, individual)
-    return m.simulate(sims),
+    return MAZE.how_long(m.probs),
 
   def mutate(individual):
     cur = 0
