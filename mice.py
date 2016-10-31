@@ -38,8 +38,10 @@ class Compass(Enum):
 
 class Maze:
   def __init__(self, maze):
-    for i in range(len(maze)):
-      for j in range(len(maze[i])):
+    self.height = len(maze)
+    self.width = len(maze[0])
+    for i in range(self.height):
+      for j in range(self.width):
         if maze[i][j] == Tile.start:
           self.start = Position(i, j)
           maze[i][j] = Tile.open
@@ -74,15 +76,15 @@ class Mouse:
     self.position = maze.start
     self.turns = 0
 
+  def is_blocked(self, direction):
+    tile = self.position + Compass[direction].value
+    return self.maze.look(tile) == Tile.block
+
   def look_around(self):
-    right = self.position + Compass.east.value
-    up = self.position + Compass.north.value
-    left = self.position + Compass.west.value
-    down = self.position + Compass.south.value
-    return 1 * self.maze.look(right).value + \
-           2 * self.maze.look(up).value + \
-           4 * self.maze.look(left).value + \
-           8 * self.maze.look(down).value
+    return 1 * self.is_blocked('east') + \
+           2 * self.is_blocked('north') + \
+           4 * self.is_blocked('west') + \
+           8 * self.is_blocked('south')
 
   def make_move(self, direction):
     new_pos = self.position + list(Compass)[direction].value
@@ -118,4 +120,3 @@ class Mouse:
       self.position = self.maze.start
 
     return total / N
-
