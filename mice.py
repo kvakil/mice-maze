@@ -1,5 +1,6 @@
 from enum import Enum, IntEnum
 from random import uniform
+from collections import defaultdict
 
 class Tile(Enum):
   open = 0
@@ -53,6 +54,34 @@ class Maze:
   def look(self, position):
     return self.maze[position.x][position.y]
 
+  def position_hash(self, position):
+    total = 0
+    for i, direction in enumerate(Compass):
+      if self.look(position + direction.value) == Tile.block:
+        total += 2 ** i
+    return total
+
+  def create_markov(self):
+    open_id = {self.start: 0}
+    current_id = 0
+    for i in range(1, self.height - 1):
+      for j in range(1, self.width - 1):
+        pos = Position(i, j)
+        if self.look(pos) == Tile.open and pos != self.end:
+          current_id += 1
+          open_id[pos] = current_id
+
+    matrix = [['0' for _ in open_id] for _ in open_id]
+    for pos, pid in open_id.items():
+      surroundings = self.position_hash(pos)
+      for i, direction in enumerate(Compass):
+        new_pos = pos + direction.value
+        if new_pos in open_id:
+          newpid = open_id[new_pos]
+          matrix[pid][newpid] = 'probs[%d][%d]' % (surroundings, i)
+
+    self.markov = eval('lambda probs: ' + repr(matrix).replace("'", ''))
+
 class Mouse:
   lifespan = 250
 
@@ -76,22 +105,12 @@ class Mouse:
     self.position = maze.start
     self.turns = 0
 
-  def is_blocked(self, direction):
-    tile = self.position + Compass[direction].value
-    return self.maze.look(tile) == Tile.block
-
-  def look_around(self):
-    return 1 * self.is_blocked('east') + \
-           2 * self.is_blocked('north') + \
-           4 * self.is_blocked('west') + \
-           8 * self.is_blocked('south')
-
   def make_move(self, direction):
     new_pos = self.position + list(Compass)[direction].value
     self.position = new_pos
 
   def random_direction(self):
-    surroundings = self.look_around()
+    surroundings = self.maze.position_hash(self.position)
     cdf = uniform(0, 1)
     i = 0
     while cdf > 0 and i < 4:
