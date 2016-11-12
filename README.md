@@ -1,6 +1,6 @@
 # Mice Maze
 
-This uses genetic programming to find an optimal solution to the ``mouse in the maze'' problem. (It currently works, but I'm still trying to find the best parameters.)
+This uses genetic programming to find an optimal solution to the "mouse in the maze" problem.
 
 Here are the specifications:
 
@@ -23,7 +23,6 @@ Looking at squares (1) and (2), we see that the mouse should not go up because i
 
 The mouse's chromosome is a list of probabilities, which determines how likely it is to move in any direction given its surroundings. [DEAP](https://github.com/DEAP/deap) is used to implement the standard mu+lambda algorithm. 
 
-## TODO
+## Extra
 
-1. code cleanup and documentation.
-2. full writeup.
+This project is multi-threading compatible with [SCOOP](http://pyscoop.org/).
